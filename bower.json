@@ -1,0 +1,23 @@
+{
+  "name": "chatbox-demo",
+  "description": "A demonstration project for a chat box",
+  "main": "app.js",
+  "authors": [
+    "Andrew Havis"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "chat",
+    "chatbox",
+    "demos"
+  ],
+  "homepage": "https://github.com/AndrewHavis/chatbox-demo",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
