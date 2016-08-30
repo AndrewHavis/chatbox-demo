@@ -5,20 +5,29 @@
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #msgForm { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      #enterNickname { background-color: cornflowerblue; color: white; padding: 10px; width: 400px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+      #msgForm input, #nicknameForm input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      #msgForm button, #nicknameForm button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
       #statusMsg { background-color: cornflowerblue; padding: 10px; width: 100%; color: white; position: fixed; bottom: 40px; display: none; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
       #messages li.info-msg { color: darkslategrey; font-style: italic; }
     </style>
+    <script src="/lib/jquery-modal/jquery.modal.min.js"></script>
+    <link rel="stylesheet" href="/lib/jquery-modal/jquery.modal.min.css" media="screen">
   </head>
   <body>
+    <div id="enterNickname" class="modal">
+        <p>Please enter a nickname:</p>
+        <form id="nicknameForm">
+            <input id="nickname"><button>Submit</button>
+        </form>
+    </div>
     <ul id="messages"></ul>
     <div id="statusMsg"></div>
-    <form action="">
+    <form action="" id="msgForm">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
     <script src="/lib/socket.io-client/socket.io.js"></script>
@@ -26,7 +35,23 @@
     <script>
         const socket = io();
         let isTyping = false; // We'll set this to true when the user starts typing something
-        $('form').submit( () => {
+
+        // Show the nickname modal when the page loads
+        $(() => {
+           $('#enterNickname').modal();
+        });
+
+        // Nickname submission
+        $('#nicknameForm').submit( () => {
+            if ($('#nicknameForm').val() !== '') {
+                // Submit if the nickname isn't empty
+                socket.emit('nickname', $('#nickname').val());
+                $('#enterNickname').hide();
+            }
+        });
+
+        // Chat message submission
+        $('#msgForm').submit( () => {
             socket.emit('message', $('#m').val());
             $('#m').val('');
             socket.emit('messageClear');
@@ -43,7 +68,17 @@
             }
         });
         socket.on('message', (msg) => {
-            $('#messages').append($('<li>').text(msg));
+            let nickname = window.sessionStorage.getItem('nickname');
+            if (!!nickname) {
+                $('#messages').append('<li>').text(nickname + ' ' + msg);
+            }
+            else {
+                $('#messages').append($('<li>').text(msg));
+            }
+        });
+        socket.on('nickname', (nickname) => {
+            // Save the nickname in session storage
+            window.sessionStorage.setItem('nickname', nickname);
         });
         socket.on('infoMessage', (msg) => {
             $('#messages').append($('<li class="info-msg">').text(msg));
@@ -51,8 +86,15 @@
         socket.on('typing', () => {
             // Check that we're not showing the typing message already
             if (!isTyping) {
+                let nickname = window.sessionStorage.getItem('nickname');
                 $('#statusMsg').show();
-                $('#statusMsg').append($('<span id="userTyping">').text('A user is typing...'));
+                if (!!nickname) {
+                    // If a nickname is available, display it
+                    $('#statusMsg').append($('<span id="userTyping">').text(nickname + ' is typing...'));
+                }
+                else {
+                    $('#statusMsg').append($('<span id="userTyping">').text('A user is typing...'));
+                }
                 isTyping = true;
             }
         });

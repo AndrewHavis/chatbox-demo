@@ -30,6 +30,9 @@ io.on('connection', (socket) => {
     socket.on('message', (msg) => {
         io.emit('message', msg);
     });
+    socket.on('nickname', (nickname) => {
+       io.emit('nickname', nickname);
+    });
     socket.on('typing', () => {
         io.emit('typing');
     });
