@@ -18,8 +18,10 @@ app.use('/lib', express.static(__dirname + '/bower_components'));
 // Listen for user connections
 io.on('connection', (socket) => {
     console.log('A user connected');
+    io.emit('message', 'A user has joined the chat.');
     socket.on('disconnect', () => {
         console.log('A user disconnected');
+        io.emit('message', 'A user has left the chat.');
     });
     socket.on('message', (msg) => {
         io.emit('message', msg);
