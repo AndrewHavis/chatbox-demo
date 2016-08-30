@@ -17,14 +17,24 @@ app.use('/lib', express.static(__dirname + '/bower_components'));
 
 // Listen for user connections
 io.on('connection', (socket) => {
-    console.log('A user connected');
-    io.emit('message', 'A user has joined the chat.');
+    let userIp = socket.handshake.address;
+    if (userIp === '127.0.0.1' || userIp === '::1') {
+        userIp = 'this machine';
+    }
+    console.log('A user connected from ' + userIp);
+    io.emit('infoMessage', 'A user has joined the chat.');
     socket.on('disconnect', () => {
-        console.log('A user disconnected');
-        io.emit('message', 'A user has left the chat.');
+        console.log('A user disconnected from ' + userIp);
+        io.emit('infoMessage', 'A user has left the chat.');
     });
     socket.on('message', (msg) => {
         io.emit('message', msg);
+    });
+    socket.on('typing', () => {
+        io.emit('typing');
+    });
+    socket.on('messageClear', () => {
+        io.emit('messageClear');
     });
 });
 

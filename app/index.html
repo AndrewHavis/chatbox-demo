@@ -8,13 +8,16 @@
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #statusMsg { background-color: cornflowerblue; padding: 10px; width: 100%; color: white; position: fixed; bottom: 40px; display: none; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
+      #messages li.info-msg { color: darkslategrey; font-style: italic; }
     </style>
   </head>
   <body>
     <ul id="messages"></ul>
+    <div id="statusMsg"></div>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -22,13 +25,41 @@
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script>
         const socket = io();
+        let isTyping = false; // We'll set this to true when the user starts typing something
         $('form').submit( () => {
             socket.emit('message', $('#m').val());
             $('#m').val('');
+            socket.emit('messageClear');
             return false;
+        });
+        $('#m').keyup( () => {
+            // If the message box is empty, emit the messageClear event so we don't show the 'User is typing...' message
+            if ($('#m').val() === '') {
+                socket.emit('messageClear');
+            }
+            else {
+                // Show the 'User is typing...' message
+                socket.emit('typing');
+            }
         });
         socket.on('message', (msg) => {
             $('#messages').append($('<li>').text(msg));
+        });
+        socket.on('infoMessage', (msg) => {
+            $('#messages').append($('<li class="info-msg">').text(msg));
+        });
+        socket.on('typing', () => {
+            // Check that we're not showing the typing message already
+            if (!isTyping) {
+                $('#statusMsg').show();
+                $('#statusMsg').append($('<span id="userTyping">').text('A user is typing...'));
+                isTyping = true;
+            }
+        });
+        socket.on('messageClear', () => {
+            $('#userTyping').remove();
+            $('#statusMsg').hide();
+            isTyping = false;
         });
     </script>
   </body>
